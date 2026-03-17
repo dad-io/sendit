@@ -1,12 +1,11 @@
 [package]
-name = "zenoh-explorer"
+name = "send-it"
 version = "0.1.0"
 edition = "2021"
-description = "A native GUI application for exploring Zenoh networks"
+description = "A drag-and-drop file transfer tool over Zenoh networks"
 license = "Apache-2.0"
-authors = ["Zenoh Community"]
-repository = "https://github.com/zenoh-project/zenoh-explorer"
-keywords = ["zenoh", "network", "explorer", "gui", "client"]
+authors = ["SendIT Contributors"]
+keywords = ["zenoh", "file-transfer", "gui", "peer-to-peer"]
 categories = ["network-programming", "gui"]
 
 [workspace]
@@ -44,7 +43,7 @@ seahash = "4.1"
 rfd = "0.14"
 
 [[bin]]
-name = "zenoh-explorer"
+name = "send-it"
 path = "src/main.rs"
 
 [profile.release]

@@ -3726,6 +3726,25 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d767eb0aabc880b29956c35734170f26ed551a859dbd361d140cdbeca61ab1e2"
 
 [[package]]
+name = "send-it"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "chrono",
+ "eframe",
+ "egui",
+ "egui_extras",
+ "rfd",
+ "seahash",
+ "serde",
+ "serde_json",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "zenoh",
+]
+
+[[package]]
 name = "serde"
 version = "1.0.228"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5852,25 +5871,6 @@ dependencies = [
  "rand_chacha 0.3.1",
  "sha3",
  "zenoh-result",
-]
-
-[[package]]
-name = "zenoh-explorer"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "chrono",
- "eframe",
- "egui",
- "egui_extras",
- "rfd",
- "seahash",
- "serde",
- "serde_json",
- "tokio",
- "tracing",
- "tracing-subscriber",
- "zenoh",
 ]
 
 [[package]]
