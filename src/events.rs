@@ -139,6 +139,20 @@ impl SendItApp {
             Vec::new()
         };
 
+        // One-shot auto-open: reveal tree on first inbound message
+        if !self.tree_auto_opened
+            && events.iter().any(|e| {
+                matches!(
+                    e,
+                    ZenohEvent::MessageReceived(_) | ZenohEvent::MessageBatch(_)
+                )
+            })
+        {
+            self.show_tree = true;
+            self.tree_auto_opened = true;
+            self.settings_open = false;
+        }
+
         // Process each event and update UI state accordingly
         for event in events {
             match event {

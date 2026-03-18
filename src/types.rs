@@ -295,6 +295,16 @@ pub enum DetailView {
     TopicDetails,
 }
 
+/// Which settings category tab is currently open in the system panel.
+#[derive(PartialEq, Clone)]
+pub enum SystemTab {
+    Connection,
+    Subscriptions,
+    Query,
+    Queryable,
+    Memory,
+}
+
 /// Current status of the Zenoh connection.
 /// Supports dual-session architecture with separate states for publishing and monitor sessions.
 #[derive(PartialEq)]

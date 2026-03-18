@@ -5,7 +5,6 @@ use egui::RichText;
 use crate::colors::SendItColors;
 use crate::types::*;
 use crate::ui::messages::MessagesUI;
-use crate::ui::settings::SettingsUI;
 use crate::app::SendItApp;
 use crate::transfer;
 
@@ -27,10 +26,15 @@ pub trait TopicTreeUI {
 impl TopicTreeUI for SendItApp {
     /// Renders the left tree panel (main navigation)
     fn show_tree_panel(&mut self, ui: &mut egui::Ui) {
-        ui.vertical(|ui| {
-            // Settings panel (collapsible, above tree)
-            self.show_settings_panel(ui);
+        // Left-edge accent line matching the "files" button green
+        let rect = ui.max_rect();
+        ui.painter().vline(
+            rect.left(),
+            rect.y_range(),
+            egui::Stroke::new(2.0, egui::Color32::from_rgb(35, 150, 65)),
+        );
 
+        ui.vertical(|ui| {
             // Search/filter box
             ui.horizontal(|ui| {
                 ui.label("🔍");

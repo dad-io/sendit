@@ -1,4 +1,4 @@
-# SendIT
+# SendIt
 
 ```
     *              .                    *              .
@@ -9,54 +9,38 @@
                           *      .
     +     *    .                +         *
 
+                        s e n d i t !
 
-                            ___
-                           /   \
-                          | . . |
-                          |     |
-                          | >>> |
-                          |     |
-                          |_____|
-                         /|     |\
-                        / |     | \
-                       /  |_____|  \
-                           |   |
-                          /|   |\
-                         / |   | \
-                        '  /   \  '
-                       `  / ~ ~ \  `
-                      ~  /  ~ ~  \  ~
-                     '  / ~ ~ ~ ~ \  '
-                    `  /~ ~ ~ ~ ~ ~\  `
-                   ~  /~ ~ ~ ~ ~ ~ ~\  ~
-                  '  ~ ~ ~ ~ ~ ~ ~ ~ ~  '
+                             .~.
+          / \               /   \               / \
+         / A \    /\       /     \      /\     / B \
 
-
-                            .~.
-          /\               /   \               /\
-         /  \    /\       /     \      /\     /  \
-
-                       s e n d   i t .
+                       
+                       
+                       
 ```
+## SendIt!
 
-A simple, high-performance drag-and-drop file transfer tool for Linux, Windows and Mac.
+A simple, high-performance, drag-and-drop file transfer tool for Linux, Windows and Mac.
 
-## In a Nutshell
+## Narrative of Virtues
 
-Open the app, automatically discover destinations, drop a file onto the app window and the file is instantly published. Other SendIT instances on the same Ethernet network see it appear in the topic tree and can export/save it. No server, no configuration, just simple file transfer over standards-based peer-to-peer plumbing.
+Open the app, automatically discover peers, drop a file onto the app window and publish instantly to SendIt peers. No server, no configuration, just simple and efficient file transfer over modern standards-based peer-to-peer plumbing.
 
-### Stuff It Does
+### Categories of Virtues
 
-- **Automated-Connection**: Auto-discovers and auto-detects other SendIt instances — no setup required
-- **Drag-and-drop sending**: Drop a file, it sends automatically
-- **Large file support**: Send single files up to 50GB in size
-- **High performance**: Leverages powerful new technologies for fast and efficient operations within the application and on top of the Ethernet layer ([Rust] [Zenoh])
-- **Dark/light mode**: Toggle between themes
+- **Straightforward**: Launch & automatically discover other SendIt!s, no installation, setup or configuration required
+- **Drag-and-drop**: Drop a file -> transfer to connected SendIts
+- **Large file support**: Send single files up to 50GB
+- **High Performance**: Built with powerful, modern software components for fast app processing and on-wire transfer ([Rust] [Zenoh])
+- **Networking-options**: Configurable direct connections and multiple data transport types - UDP, TCP, WS, TLS
+- **Dark/light mode**: Light mode is almost as delightful as Dark
 
-## Quick Start
+## To Start Quickly
 
-### Prerequisites
+### Presumptions
 - Rust 1.70+
+- Mouse
 
 ### Build & Run
 
@@ -67,13 +51,6 @@ cargo run --release
 ```
 
 The app auto-connects in peer mode on port 7447 with multicast discovery. Drop a file to send it.
-
-### Docker
-
-```bash
-docker build -t send-it .
-docker run -p 7447:7447 send-it
-```
 
 ## Usage
 
@@ -100,15 +77,6 @@ Click the gear icon (top of left panel) to access:
 ### Connection Modes
 - **Peer mode** (default): Multicast discovery, mesh networking. Leave address blank for auto-discovery, or specify `tcp/ip:port` for specific peers.
 - **Client mode**: Connect to a Zenoh router at a specific endpoint.
-
-## Architecture
-
-- **Rust + egui/eframe**: Native desktop GUI with OpenGL rendering
-- **Dual-thread model**: GUI thread + Tokio async worker thread + message buffer thread
-- **Dual Zenoh sessions**: Publishing session (user operations) + monitor session (background `**` subscription)
-- **File transfer pipeline**: Import → publish dispatch (4 size tiers) → receive & store → chunk tracking → export/reassembly
-
-See [CLAUDE.md](CLAUDE.md) for detailed architecture documentation.
 
 ## License
 
