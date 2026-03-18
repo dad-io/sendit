@@ -30,14 +30,12 @@ impl TopicTreeUI for SendItApp {
         // clip_rect is the full panel area (outside inner margin), so the
         // panel's default inner margin creates space between line and content.
         let rect = ui.clip_rect();
-        ui.painter().vline(
-            rect.left(),
-            rect.y_range(),
-            egui::Stroke::new(8.0, egui::Color32::from_rgb(35, 150, 65)),
-        );
+        let green = egui::Color32::from_rgb(10, 100, 40);
+        let stroke = egui::Stroke::new(8.0, green);
+        ui.painter().vline(rect.left(), rect.y_range(), stroke);
 
         egui::Frame::none()
-            .inner_margin(egui::Margin { left: 5.0, right: 0.0, top: 0.0, bottom: 0.0 })
+            .inner_margin(egui::Margin { left: 5.0, right: 0.0, top: 8.0, bottom: 0.0 })
             .show(ui, |ui| { ui.vertical(|ui| {
             // Search/filter box
             ui.horizontal(|ui| {
