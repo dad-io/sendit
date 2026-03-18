@@ -1,36 +1,45 @@
 # SendIt
 
 ```
-    *              .                    *              .
-                        *         +           .
-         .                    *                         *
-               +       .              *     .
-    .       *        .                             +
-                          *      .
-    +     *    .                +         *
+       *              .                    *              .                         *
+                           *         +           .                    .
+            .                    *                         *                +
+                  +       .              *     .                 *
+       .       *        .                             +                .
+          +                        *      .                                    *
+       +     *    .                +         *         .              +
+                      .                          *            .
+            *                .         +                              *
 
-                        s e n d i t !
+              ___  ____  _  _  ____    ____  ____   _
+             / __)( ___)( \( )(  _ \  (_  _)(_  _) | |
+             \__ \ )__)  )  (  )(_) )  _)(_   )(   |_|
+             (___/(____)(_)\_)(____/  (____) (__)   (_)
 
-                             .~.
-          / \               /   \               / \
-         / A \    /\       /     \      /\     / B \
-
-                       
-                       
-                       
+                                       .~.
+                                      /   \
+                                     /     \
+                                    /       \
+            / \                    /         \                    / \
+           /   \        /\       /           \       /\         /   \
+          / A   \      /  \     /             \     /  \       / B   \
+         /       \    /    \   /               \   /    \     /       \
+        /         \  /      \_/                 \_/      \  /         \
+    ___/           \/                                     \/           \___
+   /                                                                      \
 ```
-## SendIt!
+## sendit
 
-A simple, high-performance, drag-and-drop file transfer tool for Linux, Windows and Mac.
+A simple, high-performance, drag-and-drop file transfer tool for local networks.
 
 ## Narrative of Virtues
 
-Open the app, automatically discover peers, drop a file onto the app window and publish instantly to SendIt peers. No server, no configuration, just simple and efficient file transfer over modern standards-based peer-to-peer plumbing.
+Open the app, automatically discover peers, drop a file onto the app window and publish instantly to sendit peers. No server, no configuration, just simple and efficient file transfer over modern standards-based peer-to-peer plumbing.
 
 ### Categories of Virtues
 
-- **Straightforward**: Launch & automatically discover other SendIt!s, no installation, setup or configuration required
-- **Drag-and-drop**: Drop a file -> transfer to connected SendIts
+- **Straightforward**: Launch & automatically discover other sendits, no installation, setup or configuration required
+- **Drag-and-drop**: Drop a file -> transfer to others
 - **Large file support**: Send single files up to 50GB
 - **High Performance**: Built with powerful, modern software components for fast app processing and on-wire transfer ([Rust] [Zenoh])
 - **Networking-options**: Configurable direct connections and multiple data transport types - UDP, TCP, WS, TLS
@@ -55,7 +64,7 @@ The app auto-connects in peer mode on port 7447 with multicast discovery. Drop a
 ## Usage
 
 ### Sending Files
-1. Launch SendIT
+1. Launch sendit
 2. Wait for connection (green dot in toolbar)
 3. Drag a file onto the central drop zone
 4. File is published automatically — topic key is derived from the file's parent directory and filename (e.g. `Documents/photo.jpg`)

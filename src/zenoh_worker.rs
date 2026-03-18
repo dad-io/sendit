@@ -1,5 +1,6 @@
 use chrono::Utc;
 use std::collections::HashMap;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{Receiver, Sender};
 use std::sync::{Arc, RwLock};
 use tokio::sync::oneshot;
@@ -91,6 +92,8 @@ pub async fn zenoh_worker(
     let mut publishing_session: Option<Arc<Session>> = None;
     // Background monitor task handle (for cleanup on disconnect)
     let mut monitor_task: Option<tokio::task::JoinHandle<()>> = None;
+    // Stop flag for the discovery polling thread (Arc<AtomicBool> so it outlives the thread spawn)
+    let mut discovery_stop: Option<Arc<AtomicBool>> = None;
     // Map of active subscriptions by ID for management (user subscriptions on publishing session)
     let mut active_subscriptions: HashMap<String, ActiveSubscription> = HashMap::new();
     // Active queryable and its associated task
@@ -116,6 +119,21 @@ pub async fn zenoh_worker(
                             mode, locators, listen_port
                         );
 
+                        // Tear down any previous connection before establishing a new one.
+                        // This handles reconnect without an explicit prior Disconnect command.
+
+                        // Stop old discovery thread
+                        if let Some(flag) = discovery_stop.take() {
+                            flag.store(true, Ordering::Relaxed);
+                            info!("Signalled old discovery thread to stop");
+                        }
+
+                        // Abort old monitor task (dropping JoinHandle does NOT abort in Tokio)
+                        if let Some(task) = monitor_task.take() {
+                            task.abort();
+                            info!("Aborted old monitor task before reconnect");
+                        }
+
                         // Phase 1: Connect the publishing session
                         match connect_zenoh(&locators, &listen_port, &mode, &config_json).await {
                             Ok(new_session) => {
@@ -129,7 +147,12 @@ pub async fn zenoh_worker(
                                     Err(e) => error!("Failed to send PublishingConnected event: {:?}", e),
                                 }
 
-                                // Spawn a separate discovery thread to monitor peers/routers
+                                // Spawn a separate discovery thread to monitor peers/routers.
+                                // We use a shared AtomicBool stop flag so the thread can be
+                                // cancelled on disconnect or reconnect.
+                                let stop_flag = Arc::new(AtomicBool::new(false));
+                                discovery_stop = Some(stop_flag.clone());
+
                                 let discovery_session = session_arc.clone();
                                 let discovery_sender = event_sender.clone();
                                 std::thread::spawn(move || {
@@ -142,6 +165,12 @@ pub async fn zenoh_worker(
 
                                     rt.block_on(async {
                                         loop {
+                                            // Exit if the stop flag has been set
+                                            if stop_flag.load(Ordering::Relaxed) {
+                                                info!("Discovery thread received stop signal, exiting");
+                                                break;
+                                            }
+
                                             // Count peers
                                             let mut peers_count = 0;
                                             let mut peers_iter = discovery_session.info().peers_zid().await;
@@ -165,7 +194,7 @@ pub async fn zenoh_worker(
                                                 break;
                                             }
 
-                                            // Poll every 2 seconds
+                                            // Poll every 2 seconds (interruptible by stop flag check next iteration)
                                             tokio::time::sleep(std::time::Duration::from_secs(2)).await;
                                         }
                                     });
@@ -262,25 +291,31 @@ pub async fn zenoh_worker(
                     ZenohCommand::Disconnect => {
                         // Clean shutdown process:
 
-                        // 1. Abort background monitor task
+                        // 1. Stop the peer discovery polling thread
+                        if let Some(flag) = discovery_stop.take() {
+                            flag.store(true, Ordering::Relaxed);
+                            info!("Discovery thread stop flag set");
+                        }
+
+                        // 2. Abort background monitor task
                         if let Some(task) = monitor_task.take() {
                             task.abort();
                             info!("Monitor background task aborted");
                         }
 
-                        // 2. Cancel all active user subscriptions gracefully
+                        // 3. Cancel all active user subscriptions gracefully
                         for (_, subscription) in active_subscriptions.drain() {
                             let _ = subscription.cancel_sender.send(());
                             subscription.task_handle.abort();
                         }
 
-                        // 3. Close the publishing session
+                        // 4. Close the publishing session
                         if let Some(s) = publishing_session.take() {
                             let _ = s.close().await;
                             info!("Publishing session closed");
                         }
 
-                        // 4. Notify GUI of disconnection
+                        // 5. Notify GUI of disconnection
                         let _ = event_sender.send(ZenohEvent::Disconnected);
                     }
                     ZenohCommand::Subscribe {
