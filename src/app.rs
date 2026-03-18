@@ -350,8 +350,13 @@ impl eframe::App for SendItApp {
                     {
                         self.show_tree = !self.show_tree;
                     }
+                    let settings_fill = if self.settings_open {
+                        Color32::from_rgb(110, 110, 115)
+                    } else {
+                        self.card_background_color()
+                    };
                     if ui.add(egui::Button::new(RichText::new("settings").strong().size(16.0))
-                        .fill(Color32::from_rgb(110, 110, 115))
+                        .fill(settings_fill)
                         .min_size(egui::vec2(72.0, 28.0))).clicked()
                     {
                         self.settings_open = !self.settings_open;
