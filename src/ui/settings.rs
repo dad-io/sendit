@@ -11,6 +11,7 @@ use crate::app::SendItApp;
 pub trait SettingsUI {
     fn show_system_tab_bar(&mut self, ui: &mut egui::Ui);
     fn show_system_tab_content(&mut self, ui: &mut egui::Ui);
+    fn show_settings_errors(&mut self, ui: &mut egui::Ui);
 }
 
 impl SettingsUI for SendItApp {
@@ -37,7 +38,8 @@ impl SettingsUI for SendItApp {
                     egui::Color32::from_rgb(110, 110, 115)
                 };
                 if ui.add(egui::Button::new(RichText::new(*label).strong().size(15.0).color(egui::Color32::WHITE))
-                    .fill(fill)).clicked()
+                    .fill(fill)
+                    .min_size(egui::vec2(0.0, 28.0))).clicked()
                 {
                     if is_active {
                         self.system_tab = None;
@@ -53,12 +55,15 @@ impl SettingsUI for SendItApp {
             } else {
                 egui::Color32::from_rgb(225, 225, 225)
             };
-            if ui.add(egui::Button::new(
-                RichText::new(if self.dark_mode { "darkmode" } else { "lightmode" }).strong().size(15.0))
-                .fill(mode_fill)).clicked()
-            {
-                self.dark_mode = !self.dark_mode;
-            }
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                if ui.add(egui::Button::new(
+                    RichText::new(if self.dark_mode { "dark" } else { "light" }).strong().size(15.0))
+                    .fill(mode_fill)
+                    .min_size(egui::vec2(0.0, 28.0))).clicked()
+                {
+                    self.dark_mode = !self.dark_mode;
+                }
+            });
         });
 
         ui.add_space(8.0);
@@ -80,6 +85,22 @@ impl SettingsUI for SendItApp {
                     }
                 });
             });
+    }
+
+    fn show_settings_errors(&mut self, ui: &mut egui::Ui) {
+        ui.horizontal(|ui| {
+            if let ConnectionStatus::Error(ref err) = self.connection_status {
+                let msg = err.clone();
+                ui.colored_label(SendItColors::ERROR, format!("connection error: {}", msg));
+                ui.separator();
+            }
+            if let Some(alert) = self.query_alert.clone() {
+                ui.colored_label(SendItColors::WARNING, &alert);
+                if ui.small_button("dismiss").clicked() {
+                    self.query_alert = None;
+                }
+            }
+        });
     }
 }
 
@@ -122,12 +143,6 @@ impl SendItApp {
         }
 
         ui.separator();
-
-        if let ConnectionStatus::Error(ref err) = self.connection_status {
-            let msg = err.clone();
-            ui.colored_label(SendItColors::ERROR, format!("error: {}", msg));
-            ui.separator();
-        }
 
         if matches!(self.connection_status, ConnectionStatus::Disconnected | ConnectionStatus::Error(_)) {
             if ui.button("connect").clicked() {
@@ -227,13 +242,6 @@ impl SendItApp {
             }
         }
 
-        if let Some(alert) = &self.query_alert.clone() {
-            ui.separator();
-            ui.colored_label(SendItColors::WARNING, alert);
-            if ui.small_button("dismiss").clicked() {
-                self.query_alert = None;
-            }
-        }
     }
 
     fn show_queryable_inline(&mut self, ui: &mut egui::Ui) {

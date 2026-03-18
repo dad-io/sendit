@@ -396,7 +396,12 @@ impl eframe::App for SendItApp {
                     });
                 });
 
-                ui.separator();
+                {
+                    let r = ui.clip_rect();
+                    let y = ui.cursor().top();
+                    ui.painter().hline(r.x_range(), y, egui::Stroke::new(2.0, Color32::from_rgb(35, 150, 65)));
+                    ui.add_space(2.0);
+                }
 
                 // System panel: category tab bar (slides down from toolbar)
                 let bg = self.background_color();
@@ -405,6 +410,8 @@ impl eframe::App for SendItApp {
                     .frame(egui::Frame::none().fill(bg).inner_margin(egui::Margin { left: 0.0, right: 0.0, top: 0.0, bottom: 0.0 }))
                     .show_animated_inside(ui, self.settings_open, |ui| {
                         self.show_system_tab_bar(ui);
+                        let r = ui.clip_rect();
+                        ui.painter().hline(r.x_range(), r.bottom(), egui::Stroke::new(2.0, Color32::from_rgb(35, 150, 65)));
                     });
 
                 // System panel: selected tab content (slides down below tab bar)
@@ -412,6 +419,21 @@ impl eframe::App for SendItApp {
                     .resizable(false)
                     .show_animated_inside(ui, self.system_tab.is_some(), |ui| {
                         self.show_system_tab_content(ui);
+                        let r = ui.clip_rect();
+                        ui.painter().hline(r.x_range(), r.bottom(), egui::Stroke::new(2.0, Color32::from_rgb(35, 150, 65)));
+                    });
+
+                // Error/alert panel (slides out below settings content)
+                let has_settings_error = self.system_tab.is_some() && (
+                    matches!(self.connection_status, ConnectionStatus::Error(_)) ||
+                    self.query_alert.is_some()
+                );
+                egui::TopBottomPanel::top("settings_errors")
+                    .resizable(false)
+                    .show_animated_inside(ui, has_settings_error, |ui| {
+                        self.show_settings_errors(ui);
+                        let r = ui.clip_rect();
+                        ui.painter().hline(r.x_range(), r.bottom(), egui::Stroke::new(2.0, Color32::from_rgb(35, 150, 65)));
                     });
 
                 // Split panel layout: tree on left, drop zone in center
