@@ -351,6 +351,7 @@ impl SendItApp {
             }) {
                 Ok(_) => {
                     info!("Publish command sent for dropped file: {}", file_name);
+                    self.show_tree = true;
                     // Transition to success after send (for non-chunked, this is immediate)
                     self.drop_zone_state = DropZoneState::Success {
                         file_name,

@@ -11,6 +11,7 @@ use tracing::info;
 use crate::colors::SendItColors;
 use crate::types::*;
 use crate::ui::drop_zone::DropZoneUI;
+use crate::ui::settings::SettingsUI;
 use crate::ui::topic_tree::TopicTreeUI;
 use crate::zenoh_worker;
 
@@ -74,6 +75,9 @@ pub struct SendItApp {
     pub(crate) payload_store: Arc<RwLock<HashMap<String, (Vec<u8>, chrono::DateTime<chrono::Utc>)>>>,
     pub(crate) settings_open: bool,
     pub(crate) drop_zone_state: crate::ui::drop_zone::DropZoneState,
+    pub(crate) show_tree: bool,
+    pub(crate) tree_auto_opened: bool,
+    pub(crate) system_tab: Option<SystemTab>,
 }
 
 impl Default for SendItApp {
@@ -177,6 +181,9 @@ impl SendItApp {
             payload_store: Arc::new(RwLock::new(HashMap::new())),
             settings_open: false,
             drop_zone_state: crate::ui::drop_zone::DropZoneState::default(),
+            show_tree: false,
+            tree_auto_opened: false,
+            system_tab: None,
         }
     }
 
@@ -193,7 +200,7 @@ impl SendItApp {
         ctx.request_repaint_after(std::time::Duration::from_millis(66));
 
         ctx.style_mut(|style| {
-            style.animation_time = 0.001;
+            style.animation_time = 0.2;
             if self.dark_mode {
                 style.visuals.widgets.inactive.weak_bg_fill = SendItColors::DARK_PRIMARY;
                 style.visuals.widgets.hovered.weak_bg_fill = SendItColors::DARK_PRIMARY_HOVER;
@@ -334,27 +341,36 @@ impl eframe::App for SendItApp {
                     .inner_margin(Margin::same(8.0)),
             )
             .show(ctx, |ui| {
-                // Simplified toolbar: title, connection status, theme toggle
+                // Toolbar: left toolbox | right app name
                 ui.horizontal(|ui| {
-                    ui.label(
-                        RichText::new("SendIT")
-                            .size(HEADING_LARGE_SIZE)
-                            .strong()
-                            .color(self.text_color()),
-                    );
-
-                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                        // Dark mode toggle
-                        if ui
-                            .button(if self.dark_mode { "☀" } else { "🌙" })
-                            .clicked()
-                        {
-                            self.dark_mode = !self.dark_mode;
+                    // Left: files, system, theme buttons
+                    if ui.add(egui::Button::new(RichText::new("files").strong().size(16.0))
+                        .fill(Color32::from_rgb(35, 150, 65))
+                        .min_size(egui::vec2(64.0, 28.0))).clicked()
+                    {
+                        self.show_tree = !self.show_tree;
+                    }
+                    if ui.add(egui::Button::new(RichText::new("settings").strong().size(16.0))
+                        .fill(Color32::from_rgb(110, 110, 115))
+                        .min_size(egui::vec2(72.0, 28.0))).clicked()
+                    {
+                        self.settings_open = !self.settings_open;
+                        if !self.settings_open {
+                            self.system_tab = None;
                         }
+                    }
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        // App name (far right)
+                        ui.label(
+                            RichText::new("sendit")
+                                .size(HEADING_LARGE_SIZE)
+                                .strong()
+                                .color(self.text_color()),
+                        );
 
                         ui.separator();
 
-                        // Connection status dot
+                        // Connection status text
                         if matches!(
                             self.connection_status,
                             ConnectionStatus::ConnectingPublishing
@@ -363,38 +379,47 @@ impl eframe::App for SendItApp {
                             ui.spinner();
                         }
                         ui.label(
-                            RichText::new("●")
-                                .color(self.connection_status.color()),
+                            RichText::new(self.connection_status.text())
+                                .color(self.connection_status.color())
+                                .size(TEXT_SMALL_SIZE),
                         );
 
-                        // Peer/router count when connected
-                        if matches!(self.connection_status, ConnectionStatus::Connected | ConnectionStatus::WaitingForPeers) {
-                            if self.discovered_peers > 0 || self.discovered_routers > 0 {
-                                let mut parts = Vec::new();
-                                if self.discovered_routers > 0 {
-                                    parts.push(format!("{}R", self.discovered_routers));
-                                }
-                                if self.discovered_peers > 0 {
-                                    parts.push(format!("{}P", self.discovered_peers));
-                                }
-                                ui.label(
-                                    RichText::new(parts.join(" "))
-                                        .color(self.text_tertiary_color())
-                                        .size(TEXT_SMALL_SIZE),
-                                );
-                            }
+                        // Peer count
+                        let total_peers = self.discovered_peers + self.discovered_routers;
+                        if total_peers > 0 {
+                            ui.label(
+                                RichText::new(format!("{} peers", total_peers))
+                                    .color(self.text_tertiary_color())
+                                    .size(TEXT_SMALL_SIZE),
+                            );
                         }
                     });
                 });
 
                 ui.separator();
 
+                // System panel: category tab bar (slides down from toolbar)
+                let bg = self.background_color();
+                egui::TopBottomPanel::top("system_tabs")
+                    .resizable(false)
+                    .frame(egui::Frame::none().fill(bg).inner_margin(egui::Margin { left: 0.0, right: 0.0, top: 0.0, bottom: 0.0 }))
+                    .show_animated_inside(ui, self.settings_open, |ui| {
+                        self.show_system_tab_bar(ui);
+                    });
+
+                // System panel: selected tab content (slides down below tab bar)
+                egui::TopBottomPanel::top("system_content")
+                    .resizable(false)
+                    .show_animated_inside(ui, self.system_tab.is_some(), |ui| {
+                        self.show_system_tab_content(ui);
+                    });
+
                 // Split panel layout: tree on left, drop zone in center
                 egui::SidePanel::left("tree_panel")
                     .default_width(300.0)
                     .min_width(200.0)
                     .resizable(true)
-                    .show_inside(ui, |ui| {
+                    .show_animated_inside(ui, self.show_tree, |ui| {
                         self.show_tree_panel(ui);
                     });
 
