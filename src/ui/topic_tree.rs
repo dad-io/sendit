@@ -77,13 +77,13 @@ impl TopicTreeUI for SendItApp {
                                     .size(HEADING_MEDIUM_SIZE)
                                     .color(self.text_tertiary_color()),
                             );
+                            ui.add_space(32.0);
                             ui.label(
                                 RichText::new("Ready to receive ...")
                                     .italics()
                                     .size(TEXT_SMALL_SIZE)
                                     .color(self.text_secondary_color()),
                             );
-                            ui.add_space(32.0);
                         });
                     } else {
                         for (_, child) in &tree_clone.children {
