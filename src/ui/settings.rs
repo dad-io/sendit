@@ -16,14 +16,6 @@ pub trait SettingsUI {
 impl SettingsUI for SendItApp {
     /// Renders the horizontal row of category tab buttons.
     fn show_system_tab_bar(&mut self, ui: &mut egui::Ui) {
-        // Top-edge accent line
-        let rect = ui.max_rect();
-        ui.painter().hline(
-            rect.x_range(),
-            rect.top(),
-            egui::Stroke::new(2.0, egui::Color32::from_rgb(110, 110, 115)),
-        );
-
         ui.horizontal(|ui| {
             let tabs: &[(SystemTab, &str)] = &[
                 (SystemTab::Connection, "connection"),
@@ -34,10 +26,15 @@ impl SettingsUI for SendItApp {
             ];
             for (tab, label) in tabs {
                 let is_active = self.system_tab.as_ref() == Some(tab);
-                let fill = if is_active {
-                    egui::Color32::from_rgb(110, 110, 115)
+                let drop_zone_color = if self.dark_mode {
+                    SendItColors::DARK_CARD_BACKGROUND
                 } else {
-                    egui::Color32::from_rgb(80, 80, 85)
+                    SendItColors::CARD_BACKGROUND
+                };
+                let fill = if is_active {
+                    drop_zone_color
+                } else {
+                    egui::Color32::from_rgb(110, 110, 115)
                 };
                 if ui.add(egui::Button::new(RichText::new(*label).strong().size(15.0).color(egui::Color32::WHITE))
                     .fill(fill)).clicked()
@@ -63,6 +60,8 @@ impl SettingsUI for SendItApp {
                 self.dark_mode = !self.dark_mode;
             }
         });
+
+        ui.add_space(8.0);
     }
 
     /// Renders the inline horizontal content for the active tab.
