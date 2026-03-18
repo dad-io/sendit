@@ -53,6 +53,15 @@ codegen-units = 1
 panic = "abort"
 strip = true
 
+[package.metadata.bundle]
+name = "sendit"
+identifier = "com.sendit.app"
+short_description = "Drag-and-drop file transfer over Zenoh networks"
+long_description = "A simple, high-performance, drag-and-drop file transfer tool for local networks using Zenoh peer-to-peer networking."
+copyright = "Apache-2.0"
+category = "public.app-category.utilities"
+osx_minimum_system_version = "11.0"
+
 [profile.dev]
 opt-level = 0
 debug = true

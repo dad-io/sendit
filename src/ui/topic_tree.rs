@@ -73,25 +73,15 @@ impl TopicTreeUI for SendItApp {
                         ui.vertical_centered(|ui| {
                             ui.add_space(32.0);
                             ui.label(
-                                RichText::new("No topics yet")
+                                RichText::new("No files yet")
                                     .size(HEADING_MEDIUM_SIZE)
                                     .color(self.text_tertiary_color()),
                             );
-                            ui.add_space(8.0);
                             ui.label(
-                                RichText::new(
-                                    "Subscribe to key expressions to see network activity",
-                                )
-                                .italics()
-                                .color(self.text_secondary_color()),
-                            );
-                            ui.add_space(4.0);
-                            ui.label(
-                                RichText::new(
-                                    "💡 Try demo/** or sensor/* in the Subscribe tab",
-                                )
-                                .size(TEXT_SMALL_SIZE)
-                                .color(self.text_tertiary_color()),
+                                RichText::new("Ready to receive ...")
+                                    .italics()
+                                    .size(TEXT_SMALL_SIZE)
+                                    .color(self.text_secondary_color()),
                             );
                             ui.add_space(32.0);
                         });
