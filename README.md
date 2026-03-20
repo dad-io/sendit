@@ -44,14 +44,13 @@ Open the app, automatically discover peers, drop a file onto the app window and 
 - **Drag-and-drop**: Drop a file -> transfer to others
 - **Large file support**: Send single files up to 50GB
 - **High Performance**: Built with powerful, modern software components for fast app processing and on-wire transfer ([Rust] [Zenoh])
-- **Networking-options**: Configurable direct connections and multiple data transport types - UDP, TCP, WS, TLS
+- **Networking Options**: Configurable direct connections and multiple data transport types - UDP, TCP, WS, TLS
 - **Dark/light mode**: Light mode is almost as delightful as Dark
 
 ## To Start Quickly
 
 ### Presumptions
 - Rust 1.70+
-- Mouse
 
 ### Build & Run
 
