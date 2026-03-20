@@ -43,7 +43,7 @@ Open the app, automatically discover peers, drop a file onto the app window and 
 - **Straightforward**: Launch & automatically discover other sendits, no installation, setup or configuration required
 - **Drag-and-drop**: Drop a file -> transfer to others
 - **Large file support**: Send large files 5GB+
-- **High Performance**: Built with powerful, modern software components for fast app processing and on-wire transfer ([Rust] [Zenoh])
+- **High Performance**: Built with Zenoh & Rust for fast app processing and on-wire transfer
 - **Networking Options**: Configurable direct connections and multiple data transport types - UDP, TCP, WS, TLS
 - **Dark/light mode**: Light mode is almost as delightful as Dark
 
