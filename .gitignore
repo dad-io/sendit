@@ -20,6 +20,7 @@ Cargo.lock
 
 # Claude-related files
 .claude/
+CLAUDE.md
 
 # Temporary files
 *.log
