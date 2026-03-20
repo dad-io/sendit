@@ -38,11 +38,11 @@ A simple, high-performance, drag-and-drop file transfer tool for local networks.
 
 Open the app, automatically discover peers, drop a file onto the app window and publish instantly to sendit peers. No server, no configuration, just simple and efficient file transfer over modern standards-based peer-to-peer plumbing.
 
-### Categories of Virtues
+### Virtues
 
 - **Straightforward**: Launch & automatically discover other sendits, no installation, setup or configuration required
 - **Drag-and-drop**: Drop a file -> transfer to others
-- **Large file support**: Send single files up to 50GB
+- **Large file support**: Send large files 5GB+
 - **High Performance**: Built with powerful, modern software components for fast app processing and on-wire transfer ([Rust] [Zenoh])
 - **Networking Options**: Configurable direct connections and multiple data transport types - UDP, TCP, WS, TLS
 - **Dark/light mode**: Light mode is almost as delightful as Dark
