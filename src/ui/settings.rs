@@ -280,7 +280,7 @@ impl SendItApp {
         let mut limit_str = self.max_memory_mb.to_string();
         if ui.add(egui::TextEdit::singleline(&mut limit_str).desired_width(50.0)).changed() {
             if let Ok(v) = limit_str.parse::<usize>() {
-                self.max_memory_mb = v.max(10).min(1000);
+                self.max_memory_mb = v.clamp(10, 1000);
             }
         }
 
@@ -289,7 +289,7 @@ impl SendItApp {
         let mut count_str = self.max_messages.to_string();
         if ui.add(egui::TextEdit::singleline(&mut count_str).desired_width(70.0)).changed() {
             if let Ok(v) = count_str.parse::<usize>() {
-                self.max_messages = v.max(100).min(50000);
+                self.max_messages = v.clamp(100, 50000);
             }
         }
 
@@ -298,7 +298,7 @@ impl SendItApp {
         let mut rate_str = self.rate_limiter.max_messages_per_second.to_string();
         if ui.add(egui::TextEdit::singleline(&mut rate_str).desired_width(55.0)).changed() {
             if let Ok(v) = rate_str.parse::<usize>() {
-                self.rate_limiter.max_messages_per_second = v.max(10).min(10000);
+                self.rate_limiter.max_messages_per_second = v.clamp(10, 10000);
             }
         }
 

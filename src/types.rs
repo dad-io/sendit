@@ -23,6 +23,7 @@ pub const HEADING_LARGE_SIZE: f32 = 24.0;      // Main app title
 pub const HEADING_MEDIUM_SIZE: f32 = 18.0;     // Section headings
 pub const TEXT_SMALL_SIZE: f32 = 13.0;         // Secondary info
 pub const TOPIC_PREVIEW_TEXT_SIZE: f32 = 13.0; // Topic preview in tree
+#[allow(dead_code)]
 pub const SUBSCRIPTION_TEXT_SIZE: f32 = 13.0;  // Subscription list items
 
 // ── Helper functions ─────────────────────────────────────────────────────────
@@ -134,6 +135,7 @@ impl ZenohMessage {
     }
 
     /// Create a new message with raw bytes
+    #[allow(clippy::too_many_arguments)]
     pub fn new_with_bytes(
         key: String,
         payload: String,

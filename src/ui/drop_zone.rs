@@ -9,8 +9,10 @@ use crate::app::SendItApp;
 
 /// State of the drop zone UI.
 #[derive(Debug, Clone, PartialEq)]
+#[derive(Default)]
 pub enum DropZoneState {
     /// Ready to accept files
+    #[default]
     Idle,
     /// File is being dragged over the zone
     Hover,
@@ -32,11 +34,6 @@ pub enum DropZoneState {
     },
 }
 
-impl Default for DropZoneState {
-    fn default() -> Self {
-        Self::Idle
-    }
-}
 
 /// Trait for drop zone rendering.
 pub trait DropZoneUI {

@@ -93,8 +93,8 @@ impl PublishUI for SendItApp {
                         }
                     }
                 }
-                if self.publish_payload_bytes.is_some() {
-                    if ui.button("✖ Clear").clicked() {
+                if self.publish_payload_bytes.is_some()
+                    && ui.button("✖ Clear").clicked() {
                         self.publish_payload_bytes = None;
                         self.publish_payload_filename = None;
                         self.publish_payload_expanded = false;
@@ -102,7 +102,6 @@ impl PublishUI for SendItApp {
                         self.publish_payload = "Hello Zenoh!".to_string();
                         self.publish_encoding = "text/plain".to_string();
                     }
-                }
             });
 
             // Show filename and expand/collapse if imported
@@ -114,7 +113,7 @@ impl PublishUI for SendItApp {
 
                 ui.horizontal(|ui| {
                     ui.label(
-                        RichText::new(format!("{}", filename))
+                        RichText::new(filename.to_string())
                             .color(self.text_secondary_color()),
                     );
                     if let Some(len) = bytes_len {

@@ -103,7 +103,7 @@ impl SendItApp {
         let now = Instant::now();
 
         // Clean old hashes periodically
-        if self.message_hashes.len() % 100 == 0 {
+        if self.message_hashes.len().is_multiple_of(100) {
             self.message_hashes.retain(|_, &mut timestamp| {
                 now.duration_since(timestamp) < self.dedup_ttl
             });
