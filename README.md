@@ -1,4 +1,4 @@
-# sendit
+# sendit!
 A simple, high-performance, drag-and-drop file transfer tool for local networks.
 ![sendit](image.png)
 ## sendit
