@@ -62,7 +62,7 @@ cargo run --release
 
 The app auto-connects in peer mode on port 7447 with multicast discovery. Drop a file to send it.
 
-## Usage
+## Useit
 
 ### Sending Files
 1. Launch sendit
