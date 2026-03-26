@@ -1,8 +1,6 @@
 # sendit!
 A simple, high-performance, drag-and-drop file transfer tool for local networks.
 ![sendit](image.png)
-## sendit
-
 ## Narrative of Virtues
 
 Open the app, automatically discover peers, drop a file onto the app window and publish instantly to sendit peers. No server, no configuration, just simple and efficient file transfer over modern standards-based peer-to-peer plumbing.
