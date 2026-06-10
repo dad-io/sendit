@@ -61,9 +61,7 @@ pub struct SendItApp {
     pub(crate) memory_warning_shown: bool,
     pub(crate) last_health_check: Instant,
     pub(crate) worker_healthy: bool,
-    pub(crate) message_hashes: HashMap<u64, Instant>,
-    pub(crate) dedup_ttl: Duration,
-    pub(crate) dedup_enabled: bool,
+    pub(crate) deduper: Deduper,
     pub(crate) messages_deduped: usize,
     #[allow(dead_code)]
     pub(crate) local_kvstore: Arc<RwLock<HashMap<String, (String, String)>>>,
@@ -72,13 +70,19 @@ pub struct SendItApp {
     pub(crate) paused_keys: std::collections::HashSet<String>,
     pub(crate) json_parse_cache: std::collections::HashMap<u64, Option<String>>,
     pub(crate) expanded_payloads: std::collections::HashSet<String>,
-    #[allow(clippy::type_complexity)]
-    pub(crate) payload_store: Arc<RwLock<HashMap<String, (Vec<u8>, chrono::DateTime<chrono::Utc>)>>>,
+    pub(crate) payload_store: Arc<RwLock<PayloadStoreMap>>,
     pub(crate) settings_open: bool,
     pub(crate) drop_zone_state: crate::ui::drop_zone::DropZoneState,
     pub(crate) show_tree: bool,
     pub(crate) tree_auto_opened: bool,
     pub(crate) system_tab: Option<SystemTab>,
+    /// Transient alert shown in the global banner (✓ success / ⚠ warning).
+    pub(crate) ui_alert: Option<String>,
+    /// Monotonic counter bumped on every browse-tree mutation; invalidates the
+    /// tree-filter visible-path cache.
+    pub(crate) tree_version: u64,
+    /// Cache of (lowercased filter, tree_version, visible-path set) for the tree filter.
+    pub(crate) tree_filter_cache: Option<(String, u64, std::collections::HashSet<String>)>,
 }
 
 impl Default for SendItApp {
@@ -169,9 +173,7 @@ impl SendItApp {
             memory_warning_shown: false,
             last_health_check: Instant::now(),
             worker_healthy: true,
-            message_hashes: HashMap::new(),
-            dedup_ttl: Duration::from_secs(60),
-            dedup_enabled: true,
+            deduper: Deduper::new(Duration::from_secs(60)),
             messages_deduped: 0,
             local_kvstore: Arc::new(RwLock::new(HashMap::new())),
             queryable_enabled: false,
@@ -185,6 +187,9 @@ impl SendItApp {
             show_tree: false,
             tree_auto_opened: false,
             system_tab: None,
+            ui_alert: None,
+            tree_version: 0,
+            tree_filter_cache: None,
         }
     }
 
@@ -224,8 +229,7 @@ impl SendItApp {
                 style.visuals.widgets.hovered.fg_stroke.color = SendItColors::DARK_TEXT_PRIMARY;
                 style.visuals.widgets.active.fg_stroke.color = SendItColors::DARK_TEXT_PRIMARY;
 
-                style.visuals.widgets.noninteractive.bg_fill =
-                    SendItColors::DARK_CARD_BACKGROUND;
+                style.visuals.widgets.noninteractive.bg_fill = SendItColors::DARK_CARD_BACKGROUND;
                 style.visuals.widgets.noninteractive.fg_stroke.color =
                     SendItColors::DARK_TEXT_PRIMARY;
 
@@ -345,9 +349,13 @@ impl eframe::App for SendItApp {
                 // Toolbar: left toolbox | right app name
                 ui.horizontal(|ui| {
                     // Left: files, system, theme buttons
-                    if ui.add(egui::Button::new(RichText::new("files").strong().size(16.0))
-                        .fill(Color32::from_rgb(10, 100, 40))
-                        .min_size(egui::vec2(64.0, 28.0))).clicked()
+                    if ui
+                        .add(
+                            egui::Button::new(RichText::new("files").strong().size(16.0))
+                                .fill(Color32::from_rgb(10, 100, 40))
+                                .min_size(egui::vec2(64.0, 28.0)),
+                        )
+                        .clicked()
                     {
                         self.show_tree = !self.show_tree;
                     }
@@ -356,9 +364,13 @@ impl eframe::App for SendItApp {
                     } else {
                         self.card_background_color()
                     };
-                    if ui.add(egui::Button::new(RichText::new("settings").strong().size(16.0))
-                        .fill(settings_fill)
-                        .min_size(egui::vec2(72.0, 28.0))).clicked()
+                    if ui
+                        .add(
+                            egui::Button::new(RichText::new("settings").strong().size(16.0))
+                                .fill(settings_fill)
+                                .min_size(egui::vec2(72.0, 28.0)),
+                        )
+                        .clicked()
                     {
                         self.settings_open = !self.settings_open;
                         if !self.settings_open {
@@ -404,11 +416,43 @@ impl eframe::App for SendItApp {
 
                 ui.separator();
 
+                // Global alert banner (export results, warnings) — visible on every view.
+                // Success messages (leading ✓) render green with no warning glyph;
+                // everything else is an orange ⚠ warning. Dismissible.
+                if let Some(alert_text) = self.ui_alert.clone() {
+                    egui::TopBottomPanel::top("alert_banner").show_inside(ui, |ui| {
+                        ui.horizontal(|ui| {
+                            let is_success = alert_text.starts_with('✓');
+                            let (text, color) = if is_success {
+                                (
+                                    alert_text.clone(),
+                                    if self.dark_mode {
+                                        SendItColors::DARK_SUCCESS
+                                    } else {
+                                        SendItColors::SUCCESS
+                                    },
+                                )
+                            } else {
+                                (format!("⚠ {}", alert_text), SendItColors::WARNING)
+                            };
+                            ui.label(RichText::new(text).color(color));
+                            if ui.small_button("✖").clicked() {
+                                self.ui_alert = None;
+                            }
+                        });
+                    });
+                }
+
                 // System panel: category tab bar (slides down from toolbar)
                 let bg = self.background_color();
                 egui::TopBottomPanel::top("system_tabs")
                     .resizable(false)
-                    .frame(egui::Frame::none().fill(bg).inner_margin(egui::Margin { left: 0.0, right: 0.0, top: 0.0, bottom: 0.0 }))
+                    .frame(egui::Frame::none().fill(bg).inner_margin(egui::Margin {
+                        left: 0.0,
+                        right: 0.0,
+                        top: 0.0,
+                        bottom: 0.0,
+                    }))
                     .show_animated_inside(ui, self.settings_open, |ui| {
                         self.show_system_tab_bar(ui);
                     });
@@ -421,10 +465,9 @@ impl eframe::App for SendItApp {
                     });
 
                 // Error/alert panel (slides out below settings content)
-                let has_settings_error = self.system_tab.is_some() && (
-                    matches!(self.connection_status, ConnectionStatus::Error(_)) ||
-                    self.query_alert.is_some()
-                );
+                let has_settings_error = self.system_tab.is_some()
+                    && (matches!(self.connection_status, ConnectionStatus::Error(_))
+                        || self.query_alert.is_some());
                 egui::TopBottomPanel::top("settings_errors")
                     .resizable(false)
                     .show_animated_inside(ui, has_settings_error, |ui| {

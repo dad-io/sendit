@@ -3,9 +3,9 @@
 use egui::RichText;
 use tracing::{error, info};
 
+use crate::app::SendItApp;
 use crate::colors::SendItColors;
 use crate::types::*;
-use crate::app::SendItApp;
 
 /// Trait for system panel tab bar and inline settings content.
 pub trait SettingsUI {
@@ -37,9 +37,18 @@ impl SettingsUI for SendItApp {
                 } else {
                     egui::Color32::from_rgb(110, 110, 115)
                 };
-                if ui.add(egui::Button::new(RichText::new(*label).strong().size(15.0).color(egui::Color32::WHITE))
-                    .fill(fill)
-                    .min_size(egui::vec2(0.0, 28.0))).clicked()
+                if ui
+                    .add(
+                        egui::Button::new(
+                            RichText::new(*label)
+                                .strong()
+                                .size(15.0)
+                                .color(egui::Color32::WHITE),
+                        )
+                        .fill(fill)
+                        .min_size(egui::vec2(0.0, 28.0)),
+                    )
+                    .clicked()
                 {
                     if is_active {
                         self.system_tab = None;
@@ -56,10 +65,17 @@ impl SettingsUI for SendItApp {
                 egui::Color32::from_rgb(225, 225, 225)
             };
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                if ui.add(egui::Button::new(
-                    RichText::new(if self.dark_mode { "dark" } else { "light" }).strong().size(15.0))
-                    .fill(mode_fill)
-                    .min_size(egui::vec2(0.0, 28.0))).clicked()
+                if ui
+                    .add(
+                        egui::Button::new(
+                            RichText::new(if self.dark_mode { "dark" } else { "light" })
+                                .strong()
+                                .size(15.0),
+                        )
+                        .fill(mode_fill)
+                        .min_size(egui::vec2(0.0, 28.0)),
+                    )
+                    .clicked()
                 {
                     self.dark_mode = !self.dark_mode;
                 }
@@ -74,15 +90,13 @@ impl SettingsUI for SendItApp {
         egui::ScrollArea::horizontal()
             .id_salt("system_content_scroll")
             .show(ui, |ui| {
-                ui.horizontal(|ui| {
-                    match self.system_tab.clone() {
-                        Some(SystemTab::Connection)    => self.show_connection_inline(ui),
-                        Some(SystemTab::Subscriptions) => self.show_subscriptions_inline(ui),
-                        Some(SystemTab::Query)         => self.show_query_inline(ui),
-                        Some(SystemTab::Queryable)     => self.show_queryable_inline(ui),
-                        Some(SystemTab::Memory)        => self.show_memory_inline(ui),
-                        None => {}
-                    }
+                ui.horizontal(|ui| match self.system_tab.clone() {
+                    Some(SystemTab::Connection) => self.show_connection_inline(ui),
+                    Some(SystemTab::Subscriptions) => self.show_subscriptions_inline(ui),
+                    Some(SystemTab::Query) => self.show_query_inline(ui),
+                    Some(SystemTab::Queryable) => self.show_queryable_inline(ui),
+                    Some(SystemTab::Memory) => self.show_memory_inline(ui),
+                    None => {}
                 });
             });
     }
@@ -111,11 +125,11 @@ impl SendItApp {
             .width(55.0)
             .selected_text(&self.connect_transport)
             .show_ui(ui, |ui| {
-                ui.selectable_value(&mut self.connect_transport, "tcp".to_string(),  "tcp");
-                ui.selectable_value(&mut self.connect_transport, "udp".to_string(),  "udp");
+                ui.selectable_value(&mut self.connect_transport, "tcp".to_string(), "tcp");
+                ui.selectable_value(&mut self.connect_transport, "udp".to_string(), "udp");
                 ui.selectable_value(&mut self.connect_transport, "quic".to_string(), "quic");
-                ui.selectable_value(&mut self.connect_transport, "ws".to_string(),   "ws");
-                ui.selectable_value(&mut self.connect_transport, "tls".to_string(),  "tls");
+                ui.selectable_value(&mut self.connect_transport, "ws".to_string(), "ws");
+                ui.selectable_value(&mut self.connect_transport, "tls".to_string(), "tls");
             });
 
         ui.separator();
@@ -133,7 +147,7 @@ impl SendItApp {
             .selected_text(&self.connection_mode)
             .show_ui(ui, |ui| {
                 ui.selectable_value(&mut self.connection_mode, "client".to_string(), "Client");
-                ui.selectable_value(&mut self.connection_mode, "peer".to_string(),   "Peer");
+                ui.selectable_value(&mut self.connection_mode, "peer".to_string(), "Peer");
             });
 
         if self.connection_mode == "peer" {
@@ -144,16 +158,25 @@ impl SendItApp {
 
         ui.separator();
 
-        if matches!(self.connection_status, ConnectionStatus::Disconnected | ConnectionStatus::Error(_)) {
+        if matches!(
+            self.connection_status,
+            ConnectionStatus::Disconnected | ConnectionStatus::Error(_)
+        ) {
             if ui.button("connect").clicked() {
                 if let Some(sender) = &self.command_sender {
                     self.connection_status = ConnectionStatus::ConnectingPublishing;
                     let locators = if self.connect_address.is_empty() {
                         String::new()
                     } else {
-                        format!("{}/{}:{}", self.connect_transport, self.connect_address, self.connect_port)
+                        format!(
+                            "{}/{}:{}",
+                            self.connect_transport, self.connect_address, self.connect_port
+                        )
                     };
-                    info!("Connect - mode: {}, locators: {}, listen_port: {}", self.connection_mode, locators, self.listen_port);
+                    info!(
+                        "Connect - mode: {}, locators: {}, listen_port: {}",
+                        self.connection_mode, locators, self.listen_port
+                    );
                     match sender.send(ZenohCommand::Connect {
                         locators,
                         listen_port: self.listen_port.clone(),
@@ -185,7 +208,10 @@ impl SendItApp {
             ConnectionStatus::Connected | ConnectionStatus::WaitingForPeers
         ) && !self.subscribe_key.is_empty();
 
-        if ui.add_enabled(can_subscribe, egui::Button::new("subscribe")).clicked() {
+        if ui
+            .add_enabled(can_subscribe, egui::Button::new("subscribe"))
+            .clicked()
+        {
             if let Some(sender) = &self.command_sender {
                 let _ = sender.send(ZenohCommand::Subscribe {
                     key_expr: self.subscribe_key.clone(),
@@ -230,7 +256,10 @@ impl SendItApp {
             ConnectionStatus::Connected | ConnectionStatus::WaitingForPeers
         ) && !self.query_selector.is_empty();
 
-        if ui.add_enabled(can_query, egui::Button::new("query")).clicked() {
+        if ui
+            .add_enabled(can_query, egui::Button::new("query"))
+            .clicked()
+        {
             if let Some(sender) = &self.command_sender {
                 let timeout = self.query_timeout.parse().unwrap_or(10000);
                 let _ = sender.send(ZenohCommand::Query {
@@ -238,10 +267,12 @@ impl SendItApp {
                     value: self.query_value.clone(),
                     timeout_ms: timeout,
                 });
-                self.query_alert = Some(format!("Query sent for '{}'. Waiting for responses...", self.query_selector));
+                self.query_alert = Some(format!(
+                    "Query sent for '{}'. Waiting for responses...",
+                    self.query_selector
+                ));
             }
         }
-
     }
 
     fn show_queryable_inline(&mut self, ui: &mut egui::Ui) {
@@ -254,13 +285,23 @@ impl SendItApp {
         ui.checkbox(&mut self.queryable_enabled, "enable queryable");
 
         let status_color = if self.queryable_enabled {
-            if self.dark_mode { SendItColors::DARK_SUCCESS } else { SendItColors::SUCCESS }
+            if self.dark_mode {
+                SendItColors::DARK_SUCCESS
+            } else {
+                SendItColors::SUCCESS
+            }
         } else {
             self.text_tertiary_color()
         };
-        ui.label(RichText::new(if self.queryable_enabled { "active" } else { "inactive" })
+        ui.label(
+            RichText::new(if self.queryable_enabled {
+                "active"
+            } else {
+                "inactive"
+            })
             .color(status_color)
-            .size(TEXT_SMALL_SIZE));
+            .size(TEXT_SMALL_SIZE),
+        );
 
         if was_enabled != self.queryable_enabled {
             if let Some(sender) = &self.command_sender {
@@ -278,7 +319,10 @@ impl SendItApp {
     fn show_memory_inline(&mut self, ui: &mut egui::Ui) {
         ui.label("memory (mb):");
         let mut limit_str = self.max_memory_mb.to_string();
-        if ui.add(egui::TextEdit::singleline(&mut limit_str).desired_width(50.0)).changed() {
+        if ui
+            .add(egui::TextEdit::singleline(&mut limit_str).desired_width(50.0))
+            .changed()
+        {
             if let Ok(v) = limit_str.parse::<usize>() {
                 self.max_memory_mb = v.clamp(10, 1000);
             }
@@ -287,7 +331,10 @@ impl SendItApp {
         ui.separator();
         ui.label("message limit:");
         let mut count_str = self.max_messages.to_string();
-        if ui.add(egui::TextEdit::singleline(&mut count_str).desired_width(70.0)).changed() {
+        if ui
+            .add(egui::TextEdit::singleline(&mut count_str).desired_width(70.0))
+            .changed()
+        {
             if let Ok(v) = count_str.parse::<usize>() {
                 self.max_messages = v.clamp(100, 50000);
             }
@@ -296,18 +343,23 @@ impl SendItApp {
         ui.separator();
         ui.label("rate (msg/s):");
         let mut rate_str = self.rate_limiter.max_messages_per_second.to_string();
-        if ui.add(egui::TextEdit::singleline(&mut rate_str).desired_width(55.0)).changed() {
+        if ui
+            .add(egui::TextEdit::singleline(&mut rate_str).desired_width(55.0))
+            .changed()
+        {
             if let Ok(v) = rate_str.parse::<usize>() {
                 self.rate_limiter.max_messages_per_second = v.clamp(10, 10000);
             }
         }
 
         ui.separator();
-        ui.checkbox(&mut self.dedup_enabled, "dedup");
+        ui.checkbox(&mut self.deduper.enabled, "dedup");
         if self.messages_deduped > 0 {
-            ui.label(RichText::new(format!("({} deduped)", self.messages_deduped))
-                .color(self.text_secondary_color())
-                .size(TEXT_SMALL_SIZE));
+            ui.label(
+                RichText::new(format!("({} deduped)", self.messages_deduped))
+                    .color(self.text_secondary_color())
+                    .size(TEXT_SMALL_SIZE),
+            );
         }
     }
 }
