@@ -2,9 +2,9 @@
 
 use egui::RichText;
 
+use crate::app::SendItApp;
 use crate::colors::SendItColors;
 use crate::types::*;
-use crate::app::SendItApp;
 
 /// Trait for query tab rendering.
 #[allow(dead_code)]
@@ -142,25 +142,20 @@ impl QueryUI for SendItApp {
                                 ui.horizontal(|ui| {
                                     // Local indicator
                                     if message.is_local {
-                                        ui.label(
-                                            RichText::new("●").size(8.0).color(
-                                                if self.dark_mode {
-                                                    SendItColors::DARK_SUCCESS
-                                                } else {
-                                                    SendItColors::SUCCESS
-                                                },
-                                            ),
-                                        )
+                                        ui.label(RichText::new("●").size(8.0).color(
+                                            if self.dark_mode {
+                                                SendItColors::DARK_SUCCESS
+                                            } else {
+                                                SendItColors::SUCCESS
+                                            },
+                                        ))
                                         .on_hover_text("From local queryable");
                                     }
 
                                     // Timestamp
                                     ui.label(
                                         RichText::new(
-                                            message
-                                                .timestamp
-                                                .format("%H:%M:%S%.3f")
-                                                .to_string(),
+                                            message.timestamp.format("%H:%M:%S%.3f").to_string(),
                                         )
                                         .color(self.text_secondary_color())
                                         .size(TEXT_SMALL_SIZE),
@@ -180,9 +175,7 @@ impl QueryUI for SendItApp {
                                     };
 
                                     // Try to parse as JSON for pretty display (using cache)
-                                    if let Some(pretty) =
-                                        self.get_cached_json(&display_payload)
-                                    {
+                                    if let Some(pretty) = self.get_cached_json(&display_payload) {
                                         ui.label(
                                             RichText::new(pretty)
                                                 .code()
