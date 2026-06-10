@@ -70,17 +70,17 @@ impl DropZoneUI for SendItApp {
         let hovering = ctx.input(|i| !i.raw.hovered_files.is_empty());
         let dropped_files = ctx.input(|i| i.raw.dropped_files.clone());
 
-        // Auto-transition from success/error back to idle after 3 seconds
+        // Auto-transition from success/error back to idle after a delay
         match &self.drop_zone_state {
-            DropZoneState::Success { completed_at, .. } => {
-                if completed_at.elapsed() > std::time::Duration::from_secs(3) {
-                    self.drop_zone_state = DropZoneState::Idle;
-                }
+            DropZoneState::Success { completed_at, .. }
+                if completed_at.elapsed() > std::time::Duration::from_secs(3) =>
+            {
+                self.drop_zone_state = DropZoneState::Idle;
             }
-            DropZoneState::Error { occurred_at, .. } => {
-                if occurred_at.elapsed() > std::time::Duration::from_secs(5) {
-                    self.drop_zone_state = DropZoneState::Idle;
-                }
+            DropZoneState::Error { occurred_at, .. }
+                if occurred_at.elapsed() > std::time::Duration::from_secs(5) =>
+            {
+                self.drop_zone_state = DropZoneState::Idle;
             }
             _ => {}
         }
