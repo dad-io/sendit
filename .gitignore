@@ -15,9 +15,6 @@ target/
 # RustRover / JetBrains
 .idea/
 
-# Build artifacts
-Cargo.lock
-
 # Claude-related files
 .claude/
 CLAUDE.md
