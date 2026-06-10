@@ -3,13 +3,12 @@
 use egui::{Color32, RichText, Stroke};
 use tracing::{error, info};
 
+use crate::app::SendItApp;
 use crate::colors::SendItColors;
 use crate::types::*;
-use crate::app::SendItApp;
 
 /// State of the drop zone UI.
-#[derive(Debug, Clone, PartialEq)]
-#[derive(Default)]
+#[derive(Debug, Clone, PartialEq, Default)]
 pub enum DropZoneState {
     /// Ready to accept files
     #[default]
@@ -33,7 +32,6 @@ pub enum DropZoneState {
         occurred_at: std::time::Instant,
     },
 }
-
 
 /// Trait for drop zone rendering.
 pub trait DropZoneUI {
@@ -88,14 +86,21 @@ impl DropZoneUI for SendItApp {
         }
 
         // Handle hover state
-        if hovering && matches!(self.drop_zone_state, DropZoneState::Idle | DropZoneState::Hover) {
+        if hovering
+            && matches!(
+                self.drop_zone_state,
+                DropZoneState::Idle | DropZoneState::Hover
+            )
+        {
             self.drop_zone_state = DropZoneState::Hover;
         } else if !hovering && matches!(self.drop_zone_state, DropZoneState::Hover) {
             self.drop_zone_state = DropZoneState::Idle;
         }
 
         // Handle file drop
-        if !dropped_files.is_empty() && !matches!(self.drop_zone_state, DropZoneState::Sending { .. }) {
+        if !dropped_files.is_empty()
+            && !matches!(self.drop_zone_state, DropZoneState::Sending { .. })
+        {
             if dropped_files.len() > 1 {
                 self.drop_zone_state = DropZoneState::Error {
                     message: "Only one file at a time. Please drop a single file.".to_string(),
@@ -110,7 +115,11 @@ impl DropZoneUI for SendItApp {
         match self.drop_zone_state.clone() {
             DropZoneState::Idle => self.render_idle(ui),
             DropZoneState::Hover => self.render_hover(ui),
-            DropZoneState::Sending { file_name, file_size, topic_key } => {
+            DropZoneState::Sending {
+                file_name,
+                file_size,
+                topic_key,
+            } => {
                 self.render_sending(ui, &file_name, file_size, &topic_key);
             }
             DropZoneState::Success { file_name, .. } => self.render_success(ui, &file_name),
@@ -196,11 +205,7 @@ impl SendItApp {
         // Green highlight border
         let stroke = Stroke::new(3.0, SendItColors::SUCCESS);
         let painter = ui.painter();
-        painter.rect_stroke(
-            inner_rect,
-            8.0,
-            stroke,
-        );
+        painter.rect_stroke(inner_rect, 8.0, stroke);
 
         // Light green fill
         let fill = if self.dark_mode {
@@ -222,7 +227,13 @@ impl SendItApp {
         });
     }
 
-    fn render_sending(&mut self, ui: &mut egui::Ui, file_name: &str, file_size: usize, topic_key: &str) {
+    fn render_sending(
+        &mut self,
+        ui: &mut egui::Ui,
+        file_name: &str,
+        file_size: usize,
+        topic_key: &str,
+    ) {
         ui.vertical_centered(|ui| {
             ui.add_space(ui.available_height() / 3.0);
 
@@ -238,9 +249,13 @@ impl SendItApp {
                     .color(self.text_secondary_color()),
             );
             ui.label(
-                RichText::new(format!("{} → {}", crate::transfer::format_size(file_size), topic_key))
-                    .size(TEXT_SMALL_SIZE)
-                    .color(self.text_tertiary_color()),
+                RichText::new(format!(
+                    "{} → {}",
+                    crate::transfer::format_size(file_size),
+                    topic_key
+                ))
+                .size(TEXT_SMALL_SIZE)
+                .color(self.text_tertiary_color()),
             );
             ui.add_space(16.0);
             ui.spinner();
@@ -288,10 +303,7 @@ impl SendItApp {
                     .color(SendItColors::ERROR),
             );
             ui.add_space(8.0);
-            ui.label(
-                RichText::new(message)
-                    .color(self.text_secondary_color()),
-            );
+            ui.label(RichText::new(message).color(self.text_secondary_color()));
         });
     }
 
@@ -329,7 +341,10 @@ impl SendItApp {
         };
 
         let file_size = bytes.len();
-        info!("File dropped: {} ({} bytes) → topic: {}", file_name, file_size, topic_key);
+        info!(
+            "File dropped: {} ({} bytes) → topic: {}",
+            file_name, file_size, topic_key
+        );
 
         // Set sending state
         self.drop_zone_state = DropZoneState::Sending {
@@ -345,6 +360,7 @@ impl SendItApp {
                 payload: bytes,
                 encoding: "application/octet-stream".to_string(),
                 from_import: true,
+                filename: Some(file_name.clone()),
             }) {
                 Ok(_) => {
                     info!("Publish command sent for dropped file: {}", file_name);
@@ -381,9 +397,9 @@ fn derive_topic_key(path: &std::path::Path) -> String {
         .map(|n| n.to_string_lossy().to_string())
         .unwrap_or_else(|| "unknown".to_string());
 
-    let parent = path.parent().and_then(|p| {
-        p.file_name().map(|n| n.to_string_lossy().to_string())
-    });
+    let parent = path
+        .parent()
+        .and_then(|p| p.file_name().map(|n| n.to_string_lossy().to_string()));
 
     match parent {
         Some(dir) => format!("{}/{}", dir, file_name),

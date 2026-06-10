@@ -3,9 +3,9 @@
 use egui::RichText;
 use tracing::{error, info};
 
+use crate::app::SendItApp;
 use crate::colors::SendItColors;
 use crate::types::*;
-use crate::app::SendItApp;
 
 /// Trait for publish tab rendering.
 #[allow(dead_code)]
@@ -47,37 +47,36 @@ impl PublishUI for SendItApp {
                                 let total_len = bytes.len();
                                 let preview_len = total_len.min(256);
 
-                                self.publish_payload =
-                                    if let Ok(text) = std::str::from_utf8(&bytes) {
-                                        // Valid UTF-8 text - use safe truncation
-                                        if total_len > preview_len {
-                                            let safe_end =
-                                                safe_truncate_index(text, preview_len);
-                                            format!(
-                                                "{}... [+{} bytes]",
-                                                &text[..safe_end],
-                                                total_len - safe_end
-                                            )
-                                        } else {
-                                            text.to_string()
-                                        }
+                                self.publish_payload = if let Ok(text) = std::str::from_utf8(&bytes)
+                                {
+                                    // Valid UTF-8 text - use safe truncation
+                                    if total_len > preview_len {
+                                        let safe_end = safe_truncate_index(text, preview_len);
+                                        format!(
+                                            "{}... [+{} bytes]",
+                                            &text[..safe_end],
+                                            total_len - safe_end
+                                        )
                                     } else {
-                                        // Binary data - show hex dump (byte slicing is safe)
-                                        let hex: String = bytes[..preview_len]
-                                            .iter()
-                                            .map(|b| format!("{:02x} ", b))
-                                            .collect();
-                                        if total_len > preview_len {
-                                            format!(
-                                                "{}... [+{} bytes, {} total]",
-                                                hex.trim(),
-                                                total_len - preview_len,
-                                                total_len
-                                            )
-                                        } else {
-                                            hex
-                                        }
-                                    };
+                                        text.to_string()
+                                    }
+                                } else {
+                                    // Binary data - show hex dump (byte slicing is safe)
+                                    let hex: String = bytes[..preview_len]
+                                        .iter()
+                                        .map(|b| format!("{:02x} ", b))
+                                        .collect();
+                                    if total_len > preview_len {
+                                        format!(
+                                            "{}... [+{} bytes, {} total]",
+                                            hex.trim(),
+                                            total_len - preview_len,
+                                            total_len
+                                        )
+                                    } else {
+                                        hex
+                                    }
+                                };
 
                                 self.import_memory_bytes = bytes.len();
                                 self.publish_payload_bytes = Some(bytes);
@@ -93,15 +92,14 @@ impl PublishUI for SendItApp {
                         }
                     }
                 }
-                if self.publish_payload_bytes.is_some()
-                    && ui.button("✖ Clear").clicked() {
-                        self.publish_payload_bytes = None;
-                        self.publish_payload_filename = None;
-                        self.publish_payload_expanded = false;
-                        self.import_memory_bytes = 0;
-                        self.publish_payload = "Hello Zenoh!".to_string();
-                        self.publish_encoding = "text/plain".to_string();
-                    }
+                if self.publish_payload_bytes.is_some() && ui.button("✖ Clear").clicked() {
+                    self.publish_payload_bytes = None;
+                    self.publish_payload_filename = None;
+                    self.publish_payload_expanded = false;
+                    self.import_memory_bytes = 0;
+                    self.publish_payload = "Hello Zenoh!".to_string();
+                    self.publish_encoding = "text/plain".to_string();
+                }
             });
 
             // Show filename and expand/collapse if imported
@@ -113,8 +111,7 @@ impl PublishUI for SendItApp {
 
                 ui.horizontal(|ui| {
                     ui.label(
-                        RichText::new(filename.to_string())
-                            .color(self.text_secondary_color()),
+                        RichText::new(filename.to_string()).color(self.text_secondary_color()),
                     );
                     if let Some(len) = bytes_len {
                         ui.label(
@@ -124,8 +121,11 @@ impl PublishUI for SendItApp {
 
                         // Expand/collapse button for files > 256 bytes
                         if len > 256 {
-                            let button_text =
-                                if was_expanded { "▼ Collapse" } else { "▶ Expand" };
+                            let button_text = if was_expanded {
+                                "▼ Collapse"
+                            } else {
+                                "▶ Expand"
+                            };
                             if ui.button(button_text).clicked() {
                                 self.publish_payload_expanded = !was_expanded;
                                 should_regenerate = true;
@@ -239,6 +239,8 @@ impl PublishUI for SendItApp {
                         payload: payload_bytes,
                         encoding: self.publish_encoding.clone(),
                         from_import, // Don't store imported files after publish
+                        // Read filename BEFORE the post-send clear below.
+                        filename: self.publish_payload_filename.clone(),
                     }) {
                         Ok(_) => info!(
                             "GUI: Publish command sent successfully for {} bytes",
